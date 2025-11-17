@@ -91,8 +91,11 @@ public class CucumberPosSteps {
         assertThat(retrievedPosList).isEmpty();
     }
 
-    // TODO: Add Given step for new scenario
-
+    @Given("a POS list with the following elements")
+    public void aPosListWithTheFollowingElements(List<PosDto> posList) {
+        createdPosList = createPos(posList);
+        assertThat(createdPosList).size().isEqualTo(posList.size());
+    }
     // When -----------------------------------------------------------------------
 
     @When("I insert POS with the following elements")
@@ -101,8 +104,27 @@ public class CucumberPosSteps {
         assertThat(createdPosList).size().isEqualTo(posList.size());
     }
 
-    // TODO: Add When step for new scenario
+    @When("I update the POS {string} with the following data")
+    public void updateThePosWithTheFollowingData(String name, PosDto updatedData) {
+        PosDto existingPos = retrievePosByName(name);
+        PosDto posToUpdate = PosDto.builder()
+                .id(existingPos.id())
+                .name(existingPos.name())
+                .description(updatedData.description())
+                .type(updatedData.type())
+                .campus(updatedData.campus())
+                .street(updatedData.street())
+                .houseNumber(updatedData.houseNumber())
+                .postalCode(updatedData.postalCode())
+                .city(updatedData.city())
+                .build();
 
+        List<PosDto> updatedList = updatePos(List.of(posToUpdate));
+        updatedPos = updatedList.getFirst();
+        //assert if the POS to be updated exists by comparing the name and id to the retrieved POS
+        assertThat(updatedPos.name()).isEqualTo(existingPos.name());
+        assertThat(updatedPos.id()).isEqualTo(existingPos.id());
+    }
     // Then -----------------------------------------------------------------------
 
     @Then("the POS list should contain the same elements in the same order")
@@ -113,5 +135,17 @@ public class CucumberPosSteps {
                 .containsExactlyInAnyOrderElementsOf(createdPosList);
     }
 
-    // TODO: Add Then step for new scenario
+    @Then("the POS list should contain the two unchanged elements and the element with the updated data")
+    public void thePosListShouldContainTheTwoUnchangedElementsAndTheElementWithTheUpdatedData() {
+        List<PosDto> retrievedPosList = retrievePos();
+        assertThat(retrievedPosList)
+                .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "createdAt", "updatedAt")
+                .containsExactlyInAnyOrderElementsOf(
+                        List.of(
+                                createdPosList.get(0),
+                                createdPosList.get(1),
+                                updatedPos
+                        )
+                );
+    }
 }
